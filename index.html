@@ -183,9 +183,10 @@ html,body{height:100%;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;
 .prog-n{width:22px;text-align:right;font-weight:500}
 .sect-title{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
 .pill-prog{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
-.p-English{background:var(--blue-bg);color:var(--blue-dk)}
+.p-WABlueCollar{background:var(--blue-bg);color:var(--blue-dk)}
+.p-WAWhiteCollar{background:var(--purple-bg);color:var(--purple)}
 .p-Ausbildung{background:var(--coral-bg);color:var(--coral)}
-.p-Tokutei{background:var(--teal-bg);color:var(--teal)}
+.p-TokuteiGinou{background:var(--teal-bg);color:var(--teal)}
 
 /* DOC CARDS */
 .sect-hdr{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin:16px 0 8px;padding-bottom:6px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
@@ -263,7 +264,8 @@ html,body{height:100%;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;
 
     <div class="nav-sect">Program</div>
     <div class="nav-item" onclick="filterByProgram('all',this)"><i class="ti ti-world"></i>Semua Program</div>
-    <div class="nav-item" onclick="filterByProgram('English',this)"><i class="ti ti-flag"></i>English</div>
+    <div class="nav-item" onclick="filterByProgram('WA Blue Collar',this)"><i class="ti ti-flag"></i>WA Blue Collar</div>
+    <div class="nav-item" onclick="filterByProgram('WA White Collar',this)"><i class="ti ti-flag"></i>WA White Collar</div>
     <div class="nav-item" onclick="filterByProgram('Tokutei Ginou',this)"><i class="ti ti-flag"></i>Tokutei Ginou</div>
     <div class="nav-item" onclick="filterByProgram('Ausbildung',this)"><i class="ti ti-flag"></i>Ausbildung</div>
 
@@ -305,10 +307,31 @@ html,body{height:100%;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;
 <script>
 // ========== CONSTANTS ==========
 const BASES = {
-  English:       { id: 'appoL1kdbV0UyLwL4',    color: '#378ADD', bg: '#E6F1FB', dk: '#0C447C' },
-  Ausbildung:    { id: 'appNCTwB49kyXbR1V',   color: '#993C1D', bg: '#FAECE7', dk: '#712B13' },
-  'Tokutei Ginou': { id: 'app81I9rWfsU9PjVv', color: '#0F6E56', bg: '#E1F5EE', dk: '#04342C' },
+  English:       { id: 'appoL1kdbV0UyLwL4' },
+  Ausbildung:    { id: 'appNCTwB49kyXbR1V' },
+  'Tokutei Ginou': { id: 'app81I9rWfsU9PjVv' },
 };
+
+// Program tampilan (bisa beda dari base — English base dipecah jadi 2 program)
+const PROGRAM_META = {
+  'WA Blue Collar':  { baseKey: 'English',        color: '#378ADD', bg: '#E6F1FB', dk: '#0C447C' },
+  'WA White Collar': { baseKey: 'English',        color: '#534AB7', bg: '#EEEDFE', dk: '#26215C' },
+  'Ausbildung':      { baseKey: 'Ausbildung',     color: '#993C1D', bg: '#FAECE7', dk: '#712B13' },
+  'Tokutei Ginou':   { baseKey: 'Tokutei Ginou',  color: '#0F6E56', bg: '#E1F5EE', dk: '#04342C' },
+};
+const PROGRAM_KEYS = Object.keys(PROGRAM_META);
+
+function progSlug(p) { return String(p).replace(/[^a-zA-Z0-9]/g, ''); }
+
+// Tentukan program tampilan dari record mentah Airtable berdasarkan field "Program"
+function resolveProgram(baseKey, rawRecord) {
+  if (baseKey === 'English') {
+    const val = (rawRecord.fields['Program'] || '').toString().toLowerCase();
+    if (val.includes('white')) return 'WA White Collar';
+    return 'WA Blue Collar';
+  }
+  return baseKey;
+}
 
 const STATUS = {
   SUB:     { label: 'Submitted',    bg: '#F1EFE8', color: '#5F5E5A', dk: '#2C2C2A' },
@@ -324,7 +347,28 @@ const STATUS_KEYS = Object.keys(STATUS);
 
 // ========== PROGRAM FIELD CONFIG ==========
 const PROG_CONFIG = {
-  English: {
+  'WA Blue Collar': {
+    mitra:   '[31] List Mitra (from Job ID (Sync))',
+    company: 'Company Name (from Job ID (Sync))',
+    jobRole: 'Job Role (from Job ID (Sync))', jobSource: 'Job Source (from Job ID (Sync))', country: 'Country',
+    prevStatus: 'Prev Status ID', needProcess: 'Need Process',
+    konfirmasi: 'Konfirmasi Pendaftaran',
+    docs: [
+      { label: 'CV', field: 'CV (PDF)', icon: 'ti-file-text' },
+      { label: 'Paspor', field: 'Paspor', icon: 'ti-file-text' },
+      { label: 'Sertifikat Bhs Inggris', field: 'Sertifikat Bahasa Inggris (PDF)', icon: 'ti-certificate' },
+      { label: 'Recommendation Letter', field: 'Recommendation Letter (PDF)', icon: 'ti-file-text' },
+      { label: 'Motivation Letter', field: 'Motivation Letter (PDF)', icon: 'ti-file-text' },
+      { label: 'Study Plan', field: 'Study Plan (PDF)', icon: 'ti-file-text' },
+      { label: 'Research Plan', field: 'Research Plan (PDF)', icon: 'ti-file-text' },
+      { label: 'Ijazah Terakhir', field: 'Ijazah Pendidikan Terakhir (PDF)', icon: 'ti-school' },
+      { label: 'Transkrip Nilai', field: 'Transkrip Nilai Pendidikan Terakhir (PDF)', icon: 'ti-clipboard-list' },
+      { label: 'Language Proficiency', field: 'Language Proficiency Test (IELTS, TOEFL iBT, TOPIK, JLPT, etc)', icon: 'ti-language' },
+    ],
+    urls: [{ label: 'LinkedIn', field: 'Link Linkedin', icon: 'ti-brand-linkedin' }],
+    special: []
+  },
+  'WA White Collar': {
     mitra:   '[31] List Mitra (from Job ID (Sync))',
     company: 'Company Name (from Job ID (Sync))',
     jobRole: 'Job Role (from Job ID (Sync))', jobSource: 'Job Source (from Job ID (Sync))', country: 'Country',
@@ -509,8 +553,11 @@ async function loadData() {
     ['Tokutei Ginou',  cfg.tblTokutei],
   ].filter(([,t]) => t);
   const results = await Promise.allSettled(
-    pairs.map(([prog, tbl]) =>
-      fetchAll(BASES[prog].id, tbl).then(recs => recs.map(r => ({ ...r, _prog: prog, _base: BASES[prog].id, _tbl: tbl })))
+    pairs.map(([baseKey, tbl]) =>
+      fetchAll(BASES[baseKey].id, tbl).then(recs => recs.map(r => {
+        const prog = resolveProgram(baseKey, r);
+        return { ...r, _prog: prog, _base: BASES[baseKey].id, _tbl: tbl };
+      }))
     )
   );
   let errs = [];
@@ -607,7 +654,7 @@ function renderDashboard() {
   const counts = {};
   STATUS_KEYS.forEach(k => counts[k] = students.filter(s => sf(s, fld('Apply Status')) === k).length);
   const progCounts = {};
-  Object.keys(BASES).forEach(p => progCounts[p] = students.filter(s => s._prog === p).length);
+  Object.keys(PROGRAM_META).forEach(p => progCounts[p] = students.filter(s => s._prog === p).length);
   const maxProg = Math.max(...Object.values(progCounts), 1);
 
   el.innerHTML = `
@@ -626,7 +673,7 @@ function renderDashboard() {
     <div class="card" style="padding:18px">
       <div class="sect-title">Per Program</div>
       <div class="prog-bars">
-        ${Object.entries(BASES).map(([prog, b]) => `
+        ${Object.entries(PROGRAM_META).map(([prog, b]) => `
         <div class="prog-row">
           <span class="prog-nm">${prog}</span>
           <div class="prog-track"><div class="prog-fill" style="width:${Math.round((progCounts[prog]||0)/maxProg*100)}%;background:${b.color}"></div></div>
@@ -649,7 +696,7 @@ function renderDashboard() {
         ${students.slice(0,8).map(s => {
           const name = sf(s, fld('Name')) || '—';
           const status = sf(s, fld('Apply Status'));
-          const b = BASES[s._prog];
+          const b = PROGRAM_META[s._prog];
           return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick='openModal(${JSON.stringify(s._id||s.id||"")})'>
             ${avatarHtml(s, 28)}
             <div style="flex:1;min-width:0">
@@ -750,7 +797,7 @@ function renderListView(list, wrapEl) {
     const barColor = pct===100?'var(--green)':pct>=50?'var(--amber)':'var(--red)';
     return `<tr data-idx="${i}">
       <td><div class="name-cell">${avatarHtml(s,32)}<div style="font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</div></div></td>
-      <td><span class="pill-prog p-${s._prog.replace(' ','')}">${s._prog}</span></td>
+      <td><span class="pill-prog p-${progSlug(s._prog)}">${s._prog}</span></td>
       <td style="font-size:12px;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${jobRole}</td>
       <td style="font-size:12px;color:var(--text2);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${company}</td>
       <td>${badgeHtml(status)}</td>
@@ -793,7 +840,7 @@ function renderStudentGroupView(list, wrapEl) {
         <div style="font-weight:500">${name}</div>
         <div style="font-size:11px;color:var(--text3)">${email}</div>
       </div></div></td>
-      <td>${progs.map(p => `<span class="pill-prog p-${p.replace(' ','')}">${p}</span>`).join(' ')}</td>
+      <td>${progs.map(p => `<span class="pill-prog p-${progSlug(p)}">${p}</span>`).join(' ')}</td>
       <td><span class="count-badge">${recs.length}x apply</span></td>
       <td style="max-width:160px">${statuses.slice(0,3).map(k => badgeHtml(k)).join(' ')}</td>
       <td style="min-width:100px">
@@ -826,7 +873,7 @@ function openStudentProfile(email, records) {
     const status  = sf(rec, fld('Apply Status'));
     return `<div class="sp-app-row" data-ri="${i}">
       <div class="sp-app-num">${i+1}</div>
-      <span class="pill-prog p-${rec._prog.replace(' ','')}" style="flex-shrink:0">${rec._prog}</span>
+      <span class="pill-prog p-${progSlug(rec._prog)}" style="flex-shrink:0">${rec._prog}</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${company}</div>
         <div style="font-size:11px;color:var(--text3)">${jobRole} · Mitra: ${mitra}</div>
@@ -857,7 +904,7 @@ function openStudentProfile(email, records) {
           <div class="modal-name">${name}</div>
           <div style="font-size:12px;color:var(--text3);margin-top:2px">${email}</div>
           <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-            ${progs.map(p => `<span class="pill-prog p-${p.replace(' ','')}">${p}</span>`).join('')}
+            ${progs.map(p => `<span class="pill-prog p-${progSlug(p)}">${p}</span>`).join('')}
             <span class="count-badge">${records.length} aplikasi</span>
             <span style="font-size:11px;color:var(--teal);background:var(--teal-bg);padding:2px 8px;border-radius:20px;font-weight:500">${foundDocs.length}/${allDocs.length} dok</span>
           </div>
@@ -997,7 +1044,7 @@ function openModal(s) {
         <div>
           <div class="modal-name">${name}</div>
           <div class="modal-meta" style="display:flex;align-items:center;gap:6px;margin-top:4px">
-            <span class="pill-prog p-${s._prog.replace(' ','')}">${s._prog}</span>
+            <span class="pill-prog p-${progSlug(s._prog)}">${s._prog}</span>
             ${badgeHtml(modalStatus)}
           </div>
         </div>
@@ -1134,7 +1181,7 @@ function renderSettings() {
   <div class="settings-sect">
     <div class="settings-title"><i class="ti ti-table"></i> Nama Tabel per Base</div>
     <div class="form-group">
-      <label class="form-lbl">English (appL1kdbV0UyLwL4)</label>
+      <label class="form-lbl">English — Blue/White Collar (appoL1kdbV0UyLwL4)</label>
       <input class="form-inp" id="cfg-tbl-en" value="${cfg.tblEnglish||''}" placeholder="Nama tabel di base English...">
     </div>
     <div class="form-group">
